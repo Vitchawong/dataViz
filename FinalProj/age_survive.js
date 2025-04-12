@@ -1,12 +1,12 @@
 const canvas5 = d3.select("#canvas5");
 
 const svg5 = canvas5.append("svg")
-    .attr('width', 600)
-    .attr("height", 600);
+    .attr('width', 800)
+    .attr("height", 800);
 
 const margin5 = { top: 30, right: 20, bottom: 70, left: 60 };
-const graphWidth5 = 600 - margin5.left - margin5.right;
-const graphHeight5 = 600 - margin5.top - margin5.bottom;
+const graphWidth5 = 800 - margin5.left - margin5.right;
+const graphHeight5 = 800 - margin5.top - margin5.bottom;
 
 const graph5 = svg5.append('g')
     .attr("width", graphWidth5)
@@ -16,71 +16,148 @@ const graph5 = svg5.append('g')
 const xAxisGroup5 = graph5.append('g')
     .attr('transform', `translate(0, ${graphHeight5})`);
 const yAxisGroup5 = graph5.append('g');
-
-// Fetch the data
 d3.json("titanic.json").then(data => {
-    // Filter out undefined or null ages
-    const ages5 = data.map(d => d.Age).filter(age => age != null);
+    // Filter data to remove entries with missing Age
+    const validData = data.filter(d => d.Age != null);
 
-    // Create bins for the histogram (age ranges)
-    const ageBins5 = d3.histogram()
-        .domain([0, 80])  // Age range from 0 to 80
-        .thresholds(d3.range(0, 81, 5))(ages5);  // Bin size of 5 years (0-5, 5-10, ..., 75-80)
+    // Define age bins (0-10, 10-20, ..., 70-80)
+    const ageBins = d3.range(0, 81, 20);
 
-    // Create scales
-    const x5 = d3.scaleBand()
-        .domain(ageBins5.map(d => `${d.x0}-${d.x1}`))  // Label bins with age ranges
+    // Categorize each passenger into an age group
+    const groupedData = validData.map(d => {
+        const age = +d.Age;
+        const binIndex = d3.bisectLeft(ageBins, age) - 1;
+        const bin = `${ageBins[binIndex]}-${ageBins[binIndex + 1]}`;
+        return {
+            ...d,
+            ageGroup: bin,
+            survived: d.Survived === "1"
+        };
+    });
+
+    // Count survivors and non-survivors per age group
+    const ageGroups = [...new Set(groupedData.map(d => d.ageGroup))].sort();
+    const countsByAgeGroup = ageGroups.map(ageGroup => {
+        const groupData = groupedData.filter(d => d.ageGroup === ageGroup);
+        const survivors = groupData.filter(d => d.survived).length;
+        const nonSurvivors = groupData.filter(d => !d.survived).length;
+        return {
+            ageGroup,
+            survivors,
+            nonSurvivors: nonSurvivors
+        };
+    });
+
+    // Stack the data
+    const stack = d3.stack()
+        .keys(["survivors", "nonSurvivors"])
+        .order(d3.stackOrderNone)
+        .offset(d3.stackOffsetNone);
+
+    const stackedData = stack(countsByAgeGroup);
+
+    // X scale (age groups)
+    const x = d3.scaleBand()
+        .domain(ageGroups)
         .range([0, graphWidth5])
-        .padding(0.1);
+        .padding(0.2);
 
-    const y5 = d3.scaleLinear()
-        .domain([0, d3.max(ageBins5, d => d.length)])  // Max count of passengers in any bin
+    // Y scale (total count per age group)
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(countsByAgeGroup, d => d.survivors + d.nonSurvivors)])
         .nice()
         .range([graphHeight5, 0]);
 
-    // Create bars
-    graph5.selectAll(".bar")
-        .data(ageBins5)
-        .enter()
-        .append("rect")
-        .attr("class", "bar")
-        .attr("x", d => x5(`${d.x0}-${d.x1}`))
-        .attr("y", d => y5(d.length))
-        .attr("width", x5.bandwidth())
-        .attr("height", d => graphHeight5 - y5(d.length))
-        .attr("fill", "#00ced1");
+    // Color scale for the stacks
+    const color = d3.scaleOrdinal()
+        .domain(["survivors", "nonSurvivors"])
+        .range(["#00ced1", "pink"]);
 
-    // Add X Axis
-    xAxisGroup5.call(d3.axisBottom(x5));
+    // Draw the stacked bars
+    graph5.selectAll(".age-group")
+        .data(stackedData)
+        .enter().append("g")
+        .attr("class", "age-group")
+        .attr("fill", d => color(d.key))
+        .selectAll("rect")
+        .data(d => d)
+        .enter().append("rect")
+        .attr("x", d => x(d.data.ageGroup))
+        .attr("y", d => y(d[1]))
+        .attr("height", d => y(d[0]) - y(d[1]))
+        .attr("width", x.bandwidth());
 
-    // Add Y Axis
-    yAxisGroup5.call(d3.axisLeft(y5));
+// Add percentage labels inside bars
+graph5.selectAll(".label-group")
+    .data(stackedData)
+    .enter()
+    .append("g")
+    .attr("fill", "black") // or any contrasting color
+    .attr("text-anchor", "middle")
+    .attr("font-size", "10px")
+    .selectAll("text")
+    .data(d => d)
+    .enter()
+    .append("text")
+    .attr("x", d => x(d.data.ageGroup) + x.bandwidth() / 2)
+    .attr("y", d => (y(d[0]) + y(d[1])) / 2)
+    .text(d => {
+        const total = d.data.survivors + d.data.nonSurvivors;
+        const value = d[1] - d[0];
+        const percent = (value / total) * 100;
+        return `${percent.toFixed(1)}%`;
+    });
 
-    // Title for the chart
+    // Axes
+    xAxisGroup5.call(d3.axisBottom(x));
+    yAxisGroup5.call(d3.axisLeft(y));
+
+    // Title
     svg5.append("text")
         .attr("x", graphWidth5 / 2 + margin5.left)
         .attr("y", margin5.top - 10)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
         .style("font-weight", "bold")
-        .text("Age Distribution of Titanic Passengers");
+        .text("Survivors and Non-Survivors by Age Group");
 
-
+    // X-axis label
     svg5.append("text")
-    .attr("x", graphWidth3 / 2 + margin3.left)
-    .attr("y", graphHeight3 + margin3.top + 40) // Adjust this to move the label lower
-    .attr("text-anchor", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text("Age Group");
+        .attr("x", graphWidth5 / 2 + margin5.left)
+        .attr("y", graphHeight5 + margin5.top + 40)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .text("Age Group");
 
-    // Add Y Axis Label
+    // Y-axis label
     svg5.append("text")
-    .attr("transform", "rotate(-90)")  // Rotate the text to make it vertical
-    .attr("x", (graphWidth / 2 + margin.left)-610)  // Adjust to place it properly on the Y-axis
-    .attr("y", graphHeight + margin.bottom - 550)
-    .attr("text-anchor", "middle")
-    .style("font-size", "14px")
-    .style("font-weight", "bold")
-    .text("Number of Passengers");
+        .attr("transform", "rotate(-90)")
+        .attr("x", -graphHeight5 / 2)
+        .attr("y", 15)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .text("Number of Passengers");
+
+    // Legend
+    const legend = svg5.append("g")
+        .attr("transform", `translate(${graphWidth5 - 100}, ${margin5.top})`);
+
+    legend.selectAll("rect")
+        .data(color.domain())
+        .enter().append("rect")
+        .attr("x", 0)
+        .attr("y", (d, i) => i * 20)
+        .attr("width", 15)
+        .attr("height", 15)
+        .attr("fill", color);
+
+    legend.selectAll("text")
+        .data(color.domain())
+        .enter().append("text")
+        .attr("x", 20)
+        .attr("y", (d, i) => i * 20 + 12)
+        .text(d => d === "survivors" ? "Survived" : "Did not survive")
+        .style("font-size", "12px");
 });

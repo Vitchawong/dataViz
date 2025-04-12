@@ -100,17 +100,17 @@
 const canvas = d3.select("#canvas");
 
 const svg = canvas.append("svg")
-    .attr('width', 600)
-    .attr("height", 600);
+    .attr('width', 800)
+    .attr("height", 800);
 
 const margin = { top: 30, right: 20, bottom: 70, left: 60 };
-const graphWidth = 600 - margin.left - margin.right;
-const graphHeight = 600 - margin.top - margin.bottom;
+const graphWidth = 800 - margin.left - margin.right;
+const graphHeight = 800 - margin.top - margin.bottom;
 
 const graph = svg.append('g')
     .attr("width", graphWidth)
     .attr("height", graphHeight)
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top+10})`);
 
 const xAxisGroup = graph.append('g')
     .attr('transform', `translate(0, ${graphHeight})`);
@@ -118,12 +118,18 @@ const yAxisGroup = graph.append('g');
 
 // Fetch the data
 d3.json("titanic.json").then(data => {
-    // Handle missing embarkation data and group by embarkation location (C, Q, S, and Unknown for undefined)
+    const embarkationMap = {
+        C: "Cherbourg",
+        Q: "Queenstown",
+        S: "Southampton",
+        Unknown: "Unknown"
+    };
+    
+    // Group and convert codes to full names
     const embarkationCounts = d3.nest()
-        .key(d => d.Embarked || "Unknown")  // Group by embarkation location or "Unknown" if not available
-        .rollup(v => v.length) // Count the number of passengers for each location
+        .key(d => embarkationMap[d.Embarked] || "Unknown")
+        .rollup(v => v.length)
         .entries(data);
-
     // Create the scales
     const x = d3.scaleBand()
         .domain(embarkationCounts.map(d => d.key))  // C, Q, S, or Unknown
@@ -186,9 +192,20 @@ d3.json("titanic.json").then(data => {
     // Add X Axis Label
     svg.append("text")
         .attr("x", graphWidth / 2 + margin.left)
-        .attr("y", graphHeight + margin.bottom - 10)
+        .attr("y", graphHeight + margin.bottom - 1)
         .attr("text-anchor", "middle")
         .style("font-size", "14px")
         .style("font-weight", "bold")
         .text("Embarkation Location");
+
+
+        // Add Y Axis Label
+        svg.append("text")
+        .attr("transform", "rotate(-90)")  // Rotate the text to make it vertical
+        .attr("x", (graphWidth / 2 + margin.left)-610)  // Adjust to place it properly on the Y-axis
+        .attr("y", graphHeight + margin.bottom - 550)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .text("Number of Passengers");
 });

@@ -37,7 +37,7 @@ d3.functor = function(v) {
 
 tip = d3.tip()
     .attr("class","d3-tip")
-    .offset([100,0])
+    .offset([10000000000,0])
     .html(function(d){
         return "Pending: " + "<span style='color:orange'>" + formatComma(d.data.pending) + "</span>"
             + "<p>Denied: " + "<span style='color:orangered'>" + formatComma(d.data.denied) + "</span></p>"
@@ -45,6 +45,12 @@ tip = d3.tip()
             + "<p>Total: " + "<span style='color:orange'>" + formatComma(d.data.total) + "</span></p>"
     });
 mainCanvas.call(tip);
+mainCanvas.on("mousemove", function(event) {
+    // Update the tooltip position on mouse move
+    tip.style("left", (event.pageX + 10) + "px")  // Add some offset for better appearance
+       .style("top", (event.pageY - 28) + "px");
+});
+
 // Title
 svg.append("text")
     .attr("class", "daca-title")
@@ -107,12 +113,13 @@ function drawPieChart(data) {
         .attr("class", "arc")
         .attr("stroke", "#cde")
         .attr("fill", d => colorScale(d.data.total))
+        .attr('d',arcPath)
         .on("mouseover", tip.show)
         .on("mouseout",tip.hide)
 
-        .transition()
-        .duration(750)
-        .attrTween("d", arcAnimation);
+        // .transition()
+        // .duration(750)
+        // .attrTween("d", arcAnimation);
 }
 
 // Tween Animation

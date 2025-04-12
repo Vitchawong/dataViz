@@ -1,8 +1,8 @@
 const canvas2 = d3.select("#canvas2");
 
 const svg2 = canvas2.append("svg")
-    .attr('width', 600)
-    .attr("height", 600);
+    .attr('width', 800)
+    .attr("height", 800);
 
 const margin2 = { top: 50, right: 20, bottom: 70, left: 60 };
 const graphWidth2 = 600 - margin2.left - margin2.right;
@@ -11,7 +11,7 @@ const graphHeight2 = 600 - margin2.top - margin2.bottom;
 const graph2 = svg2.append('g')
     .attr("width", graphWidth2)
     .attr("height", graphHeight2)
-    .attr("transform", `translate(${margin2.left},${margin2.top})`);
+    .attr("transform", `translate(${margin2.left+10},${margin2.top})`);
 
 const xAxisGroup2 = graph2.append('g')
     .attr('transform', `translate(0, ${graphHeight2})`);
@@ -31,70 +31,95 @@ d3.json("titanic.json").then(data => {
         }
     });
 
-    const maleData = [
-        { label: "Survived", count: male_survive },
-        { label: "Did Not Survive", count: male_total - male_survive }
+    const chartData = [
+        {
+            gender: "Male",
+            Survived: male_survive,
+            "Did Not Survive": male_total - male_survive
+        },
+        {
+            gender: "Female",
+            Survived: female_survive,
+            "Did Not Survive": female_total - female_survive
+        }
     ];
 
-    const femaleData = [
-        { label: "Survived", count: female_survive },
-        { label: "Did Not Survive", count: female_total - female_survive }
-    ];
+    const subgroups = ["Survived", "Did Not Survive"];
+    const groups = chartData.map(d => d.gender);
 
-    const pie = d3.pie().value(d => d.count);
-    const arc = d3.arc().innerRadius(0).outerRadius(100);
+    const x = d3.scaleBand()
+        .domain(groups)
+        .range([0, graphWidth2])
+        .padding(0.4);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(chartData, d => d.Survived + d["Did Not Survive"])])
+        .range([graphHeight2, 0]);
+
     const color = d3.scaleOrdinal()
-        .domain(["Survived", "Did Not Survive"])
+        .domain(subgroups)
         .range(["#00ced1", "pink"]);
 
-    const spacing = 80; // add horizontal spacing between the pie charts
+    // Stack the data
+    const stackedData = d3.stack()
+        .keys(subgroups)(chartData);
 
-    // 🥧 Male Pie Chart
-    const maleGroup = graph2.append("g")
-        .attr("transform", `translate(${graphWidth2 / 2 - 100 - spacing / 2}, ${graphHeight2 / 2})`);
-
-    maleGroup.selectAll("path")
-        .data(pie(maleData))
+    // Draw stacked bars
+    graph2.selectAll("g.layer")
+        .data(stackedData)
         .enter()
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", d => color(d.data.label));
-
-    maleGroup.append("text")
-        .attr("text-anchor", "middle")
-        .attr("y", -120)
-        .style("font-size", "14px")
-        .text("Male");
-
-    // 🥧 Female Pie Chart
-    const femaleGroup = graph2.append("g")
-        .attr("transform", `translate(${graphWidth2 / 2 + 100 + spacing / 2}, ${graphHeight2 / 2})`);
-
-    femaleGroup.selectAll("path")
-        .data(pie(femaleData))
+        .append("g")
+        .attr("class", "layer")
+        .attr("fill", d => color(d.key))
+        .selectAll("rect")
+        .data(d => d)
         .enter()
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", d => color(d.data.label));
+        .append("rect")
+        .attr("x", d => x(d.data.gender))
+        .attr("y", d => y(d[1]))
+        .attr("height", d => y(d[0]) - y(d[1]))
+        .attr("width", x.bandwidth());
 
-    femaleGroup.append("text")
+    // Add percentage labels inside each bar segment
+    graph2.selectAll("g.layer")
+        .data(stackedData)
+        .selectAll("text")
+        .data(d => d)
+        .enter()
+        .append("text")
+        .attr("x", d => x(d.data.gender) + x.bandwidth() / 2)
+        .attr("y", d => y((d[0] + d[1]) / 2))
         .attr("text-anchor", "middle")
-        .attr("y", -120)
-        .style("font-size", "14px")
-        .text("Female");
+        .attr("dy", "0.35em")
+        .style("fill", "black")
+        .style("font-size", "12px")
+        .style("font-weight", "bold")
+        .text(d => {
+            const total = d.data.Survived + d.data["Did Not Survive"];
+            const count = d[1] - d[0];
+            const percent = Math.round((count / total) * 100);
+            return percent + "%";
+        });
 
-    // 🏷️ Title
+    // Add axes
+    const xAxis = d3.axisBottom(x);
+    const yAxis = d3.axisLeft(y);
+
+    xAxisGroup2.call(xAxis);
+    yAxisGroup2.call(yAxis);
+
+    // Add title
     svg2.append("text")
         .attr("x", graphWidth2 / 2 + margin2.left)
-        .attr("y", margin2.top - 10)
+        .attr("y", margin2.top - 15)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
         .style("font-weight", "bold")
         .text("Titanic Survivors vs Non-Survivors by Gender");
 
-    // 🧭 Legend
+    // Add legend
     const legend = svg2.append("g")
-        .attr("transform", `translate(${graphWidth2 - 150}, ${margin2.top})`);
+        .attr("transform", `translate(${graphWidth2 - 100}, ${margin2.top})`);
 
     legend.selectAll("rect")
         .data(color.domain())
@@ -114,40 +139,22 @@ d3.json("titanic.json").then(data => {
         .text(d => d);
 
 
-// ♂️ Percentage inside male pie
-const malePercent = Math.round((male_survive / male_total) * 100);
-maleGroup.append("text")
-.attr("x", -20)
+       // Y Axis Label
+       svg2.append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("x", -graphHeight3 / 2 - margin3.top)
+       .attr("y", margin3.left - 70)
+       .attr("text-anchor", "middle")
+       .style("font-size", "14px")
+       .style("font-weight", "bold")
+       .text("Number of Passengers");
+
+           // X Axis Label
+    svg2.append("text")
+    .attr("x", (graphWidth3 / 2 + margin3.left)-100)
+    .attr("y", graphHeight3 + margin3.top - 120)
     .attr("text-anchor", "middle")
-    .attr("dy", "-3.35em")
-    .style("font-size", "16px")
+    .style("font-size", "14px")
     .style("font-weight", "bold")
-    .text(malePercent + "%");
-
-maleGroup.append("text")
-.attr("text-anchor", "middle")
-
-.attr("dy", "3.05em")
-.style("font-size", "16px")
-.style("font-weight", "bold")
-.text(100-malePercent + "%");
-
-// ♀️ Percentage inside female pie
-const femalePercent = Math.round((female_survive / female_total) * 100);
-femaleGroup.append("text")
-.attr("x", 30) // moves text 20px to the right inside the pie group
-    .attr("text-anchor", "middle")
-    .attr("dy", "3.35em")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .text(femalePercent + "%");
-
-femaleGroup.append("text")
-.attr("x", -30) // moves text 20px to the right inside the pie group
-    .attr("text-anchor", "middle")
-    .attr("dy", "-3.35em")
-    .style("font-size", "16px")
-    .style("font-weight", "bold")
-    .text(100-femalePercent + "%");
-
+    .text("Gender");
 });
