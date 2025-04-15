@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Immigration Data Visualization</title>
+
+  <!-- D3 Libraries -->
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+  <script src="https://d3-legend.susielu.com/legend.min.js"></script>
+
+  <!-- Embedded CSS -->
+  <style>
+    body {
+      background-color: #1c1e2b;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .intro {
+      color: #fff;
+      max-width: 900px;
+      margin-bottom: 30px;
+    }
+
+    .intro h1 {
+      color: #ccc;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .intro p {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .intro a {
+      color: orange;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    #canvas {
+      margin-top: 30px;
+    }
+
+    .d3-tip {
+      line-height: 1.5;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      border-radius: 5px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="intro">
+    <h1>How Many People Apply to Come to the U.S.A – 3rd Quarter 2018</h1>
+    <p>
+      The United States of America welcomes tens of thousands of people from around the world to visit, live, and work in the U.S.
+      The following graph visualization shows all forms received and processed by the
+      <a href="https://www.uscis.gov" target="_blank">USCIS</a> in the 3rd Quarter of 2018. 
+      Additionally, the visualizations dig deeper and show how many applications were 
+      <strong>approved</strong>, <strong>denied</strong>, <strong>pending</strong>, and the type of each application.
+    </p>
+  </div>
+
+  <div id="canvas"></div>
+
+  <!-- Your JavaScript File -->
+  <script src="immigration.js"></script>
+
+</body>
+</html>

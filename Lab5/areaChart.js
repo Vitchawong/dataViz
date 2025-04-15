@@ -100,3 +100,12 @@ var circles = mainCanvas.selectAll("circles")
 
         mainCanvas.append("g")
                     .call(yAxis);
+
+
+        // Add green line connecting the dots
+mainCanvas.append("path")
+.data([revenueData])
+.attr("fill", "none")
+.attr("stroke", "green")
+.attr("stroke-width", 2)
+.attr("d", valueLine);

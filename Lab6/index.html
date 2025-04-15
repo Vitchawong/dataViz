@@ -1,21 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-   
+    <meta charset="UTF-8">  
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="https://d3-legend.susielu.com/legend.min.js"></script>
     <title>Document</title>
+
+    <!-- Add CSS here -->
+    <style>
+        body {
+            background-color: #1e3a8a; /* a nice deep blue */
+            color: white; /* optional: makes text readable */
+            font-family: Arial, sans-serif;
+        }
+
+        #canvas {
+            padding: 20px;
+        }
+
+        svg {
+            background-color: #ffffff10; /* optional: slight contrast for SVG background */
+        }
+
+        .line {
+            stroke: lightgray;
+            stroke-width: 2;
+        }
+
+        .circle {
+            fill: white;
+            stroke: #00ffcc;
+            stroke-width: 2;
+        }
+
+        .area {
+            opacity: 0.4;
+        }
+    </style>
 </head>
 <body>
-    
 
-    </script>
-    <div id="canvas">
+    <div id="canvas"></div>
 
-    </div>
-    <script src="daca.js">
-    </script>
+    <script src="daca.js"></script>
 </body>
 </html>

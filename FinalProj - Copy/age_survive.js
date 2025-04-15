@@ -4,14 +4,14 @@ const svg5 = canvas5.append("svg")
     .attr('width', 800)
     .attr("height", 800);
 
-const margin6 = { top: 30, right: 20, bottom: 70, left: 60 };
-const graphWidth5 = 800 - margin6.left - margin6.right;
-const graphHeight5 = 800 - margin6.top - margin6.bottom;
+const margin5 = { top: 30, right: 20, bottom: 70, left: 60 };
+const graphWidth5 = 800 - margin5.left - margin5.right;
+const graphHeight5 = 800 - margin5.top - margin5.bottom;
 
 const graph5 = svg5.append('g')
     .attr("width", graphWidth5)
     .attr("height", graphHeight5)
-    .attr("transform", `translate(${margin6.left},${margin6.top})`);
+    .attr("transform", `translate(${margin5.left},${margin5.top})`);
 
 const xAxisGroup5 = graph5.append('g')
     .attr('transform', `translate(0, ${graphHeight5})`);
@@ -118,8 +118,8 @@ graph5.selectAll(".label-group")
 
     // Title
     svg5.append("text")
-        .attr("x", graphWidth5 / 2 + margin6.left)
-        .attr("y", margin6.top - 10)
+        .attr("x", graphWidth5 / 2 + margin5.left)
+        .attr("y", margin5.top - 10)
         .attr("text-anchor", "middle")
         .style("font-size", "20px")
         .style("font-weight", "bold")
@@ -127,8 +127,8 @@ graph5.selectAll(".label-group")
 
     // X-axis label
     svg5.append("text")
-        .attr("x", graphWidth5 / 2 + margin6.left)
-        .attr("y", graphHeight5 + margin6.top + 40)
+        .attr("x", graphWidth5 / 2 + margin5.left)
+        .attr("y", graphHeight5 + margin5.top + 40)
         .attr("text-anchor", "middle")
         .style("font-size", "20px")
         .style("font-weight", "bold")
@@ -146,7 +146,7 @@ graph5.selectAll(".label-group")
 
     // Legend
     const legend = svg5.append("g")
-        .attr("transform", `translate(${graphWidth5 - 100}, ${margin6.top})`);
+        .attr("transform", `translate(${graphWidth5 - 100}, ${margin5.top})`);
 
     legend.selectAll("rect")
         .data(color.domain())
